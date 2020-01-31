@@ -2153,6 +2153,20 @@ class CephManager:
         """
         return self.get_num_active_recovered() == self.get_num_pgs()
 
+    def dump_recovery_reservations(self):
+        """
+        Dump recovery reservations from all live OSDs
+        """
+        self.log("Dump live recovery reservations")
+        live_osds = [int(x.id_) for x in
+                     filter(lambda x:
+                            x.running(),
+                            self.ctx.daemons.iter_daemons_of_role('osd',
+                                                                  self.cluster))]
+        for i in live_osds:
+            self.osd_admin_socket(i, command=['dump_recovery_reservations'],
+                                     check_status=True, timeout=30, stdout=stdout)
+
     def is_active_or_down(self):
         """
         True if all pgs are active or down
@@ -2174,6 +2188,7 @@ class CephManager:
                 else:
                     self.log("no progress seen, keeping timeout for now")
                     if time.time() - start >= timeout:
+                        self.dump_recovery_reservations()
                         self.log('dumping pgs')
                         out = self.raw_cluster_cmd('pg', 'dump')
                         self.log(out)
@@ -2260,6 +2275,7 @@ class CephManager:
                     if now - start >= timeout:
 			if self.is_recovered():
 			    break
+                        self.dump_recovery_reservations()
                         self.log('dumping pgs')
                         out = self.raw_cluster_cmd('pg', 'dump')
                         self.log(out)
