@@ -52,7 +52,7 @@ public:
   virtual void get_meta(uint64_t target_size,
     std::vector<std::pair<string, string>>*) const = 0;
 
-  virtual std::vector<zone_state_t> get_zone_states(KeyValueDB *kvdb) const {
+  virtual std::vector<zone_state_t> zoned_get_zone_states(KeyValueDB *kvdb) const {
     return {};
   }
 };

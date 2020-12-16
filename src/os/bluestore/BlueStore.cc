@@ -5417,7 +5417,7 @@ int BlueStore::_init_alloc()
   ceph_assert(shared_alloc.a != NULL);
 
   if (bdev->is_smr()) {
-    shared_alloc.a->zoned_set_zone_states(fm->get_zone_states(db));
+    shared_alloc.a->zoned_set_zone_states(fm->zoned_get_zone_states(db));
   }
 
   uint64_t num = 0, bytes = 0;

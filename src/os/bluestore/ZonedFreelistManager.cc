@@ -259,7 +259,7 @@ void ZonedFreelistManager::get_meta(
   res->emplace_back("zfm_starting_zone_num", stringify(starting_zone_num));
 }
 
-std::vector<zone_state_t> ZonedFreelistManager::get_zone_states(
+std::vector<zone_state_t> ZonedFreelistManager::zoned_get_zone_states(
     KeyValueDB *kvdb) const {
   std::vector<zone_state_t> zone_states;
   auto p = kvdb->get_iterator(info_prefix);
