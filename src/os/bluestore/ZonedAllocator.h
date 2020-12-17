@@ -34,6 +34,7 @@ class ZonedAllocator : public Allocator {
   uint64_t size;
   uint64_t block_size;
   uint64_t zone_size;
+  uint64_t first_seq_zone_num;
   uint64_t starting_zone_num;
   uint64_t num_zones;
   std::vector<zone_state_t> zone_states;

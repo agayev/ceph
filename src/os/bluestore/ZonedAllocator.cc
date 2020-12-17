@@ -31,7 +31,8 @@ ZonedAllocator::ZonedAllocator(CephContext* cct,
       // The last 32 bits of |block_size| is holding the actual block size.
       block_size((block_size & 0x00000000ffffffff)),
       zone_size(((block_size & 0x0000ffff00000000) >> 32) * 1024 * 1024),
-      starting_zone_num((block_size & 0xffff000000000000) >> 48),
+      first_seq_zone_num((block_size & 0xffff000000000000) >> 48),
+      starting_zone_num(first_seq_zone_num),
       num_zones(size / zone_size) {
   ldout(cct, 10) << __func__ << " size 0x" << std::hex << size
 		 << " zone size 0x" << zone_size << std::dec
@@ -159,14 +160,47 @@ void ZonedAllocator::init_rm_free(uint64_t offset, uint64_t length) {
 }
 
 bool ZonedAllocator::zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_clean) {
+  ldout(cct, 10) << __func__ << dendl;
+
+  uint64_t conventional_size = first_seq_zone_num * zone_size;
+  uint64_t sequential_size = size - conventional_size;
+  uint64_t sequential_num_free = num_free - conventional_size;
+  double free_ratio = static_cast<double>(sequential_num_free) / sequential_size;
+
+  ldout(cct, 10) << __func__ << " free size " << sequential_num_free
+		 << " total size " << sequential_size
+		 << " free ratio is " << free_ratio << dendl;
+
   // TODO: make 0.25 tunable
-  if (static_cast<double>(num_free) / size > 0.25) {
+  if (free_ratio > 0.25) {
+    ldout(cct, 10) << " no need to clean" << dendl;
     return false;
   }
   {
     std::lock_guard l(lock);
-    // TODO: populate |zones_to_clean| with the numbers of zones that should be
-    // cleaned.
+
+    // TODO: make this tunable
+    uint64_t num_zones_to_clean_at_once = 1;
+
+    std::vector<uint64_t> idx(num_zones);
+    std::iota(idx.begin(), idx.end(), 0);
+  
+    for (size_t i = 0; i < zone_states.size(); ++i) {
+      ldout(cct, 10) << __func__ << " zone " << i << zone_states[i] << dendl;
+    }
+
+    std::partial_sort(idx.begin(), idx.begin() + num_zones_to_clean_at_once, idx.end(),
+		      [this](uint64_t i1, uint64_t i2) {
+			return zone_states[i1].num_dead_bytes > zone_states[i2].num_dead_bytes;
+		      });
+
+    ldout(cct, 10) << __func__ << " the zone that needs cleaning is "
+		   << *idx.begin() << " num_dead_bytes = " << zone_states[*idx.begin()].num_dead_bytes
+		   << dendl;
+
+    ceph_assert(cleaning_in_progress_zones.empty());
+    cleaning_in_progress_zones = {idx.begin(), idx.begin() + num_zones_to_clean_at_once};
+    *zones_to_clean = {idx.begin(), idx.begin() + num_zones_to_clean_at_once};
   }
   return true;
 }
