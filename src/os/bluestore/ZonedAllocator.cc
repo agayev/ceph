@@ -59,6 +59,11 @@ int64_t ZonedAllocator::allocate(
 
   uint64_t zone_num = starting_zone_num;
   for ( ; zone_num < num_zones; ++zone_num) {
+    if (cleaning_in_progress_zones.count(zone_num)) {
+      ldout(cct, 10) << __func__ << " skipping zone " << zone_num
+		     << " because it is being cleaned" << dendl;
+      continue;
+    }
     if (fits(want_size, zone_num)) {
       break;
     }
@@ -81,6 +86,7 @@ int64_t ZonedAllocator::allocate(
 		 << " to " << offset + want_size << dendl;
 
   increment_write_pointer(zone_num, want_size);
+  num_free -= want_size;
   if (get_remaining_space(zone_num) == 0) {
     starting_zone_num = zone_num + 1;
   }
