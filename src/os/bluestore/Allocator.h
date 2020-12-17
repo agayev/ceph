@@ -60,7 +60,8 @@ public:
   virtual bool zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_clean) {
     return false;
   }
-
+  virtual void zoned_mark_zone_clean(uint64_t zone_num) {}
+  
   virtual void init_add_free(uint64_t offset, uint64_t length) = 0;
   virtual void init_rm_free(uint64_t offset, uint64_t length) = 0;
 

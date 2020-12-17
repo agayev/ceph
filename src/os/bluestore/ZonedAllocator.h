@@ -37,6 +37,7 @@ class ZonedAllocator : public Allocator {
   uint64_t starting_zone_num;
   uint64_t num_zones;
   std::vector<zone_state_t> zone_states;
+  std::set<uint64_t> cleaning_in_progress_zones;
 
   inline uint64_t get_offset(uint64_t zone_num) const {
     return zone_num * zone_size + get_write_pointer(zone_num);
@@ -81,6 +82,7 @@ public:
 
   void zoned_set_zone_states(std::vector<zone_state_t> &&_zone_states) override;
   bool zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_clean) override;
+  void zoned_mark_zone_clean(uint64_t zone_num) override;
 
   void init_add_free(uint64_t offset, uint64_t length) override;
   void init_rm_free(uint64_t offset, uint64_t length) override;
