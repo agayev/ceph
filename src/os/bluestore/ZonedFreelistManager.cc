@@ -273,12 +273,10 @@ std::vector<zone_state_t> ZonedFreelistManager::zoned_get_zone_states(
 }
 
 void ZonedFreelistManager::zoned_mark_zone_clean(
-    uint64_t zone_num, KeyValueDB *db) {
+    uint64_t zone_num, KeyValueDB::Transaction txn) {
   dout(10) << __func__ << " 0x" << std::hex << zone_num << dendl;
   zone_state_t zone_state;
-  auto t = db->get_transaction();
-  write_zone_state_to_db(zone_num, zone_state, t);
-  db->submit_transaction(t);
+  write_zone_state_to_db(zone_num, zone_state, txn);
 }
 
 // TODO: The following function is copied almost verbatim from

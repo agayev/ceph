@@ -12309,7 +12309,7 @@ void BlueStore::_zoned_clean_zone(uint64_t zone_num) {
   // TODO: (1) copy live objects from zone_num to a new zone, (2) issue a RESET
   // ZONE operation to the device for the corresponding zone.
   shared_alloc.a->zoned_mark_zone_clean(zone_num);
-  fm->zoned_mark_zone_clean(zone_num, db);
+  fm->zoned_mark_zone_clean(zone_num, db->get_transaction());
 }
 
 bluestore_deferred_op_t *BlueStore::_get_deferred_op(
