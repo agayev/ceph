@@ -221,9 +221,9 @@ void ZonedAllocator::zoned_mark_zone_clean(uint64_t zone_num) {
   std::lock_guard l(lock);
   auto removed = cleaning_in_progress_zones.erase(zone_num);
   ceph_assert(removed);
+  num_free += zone_states[zone_num].write_pointer;
   zone_states[zone_num].num_dead_bytes = 0;
   zone_states[zone_num].write_pointer = 0;
-  num_free += zone_size;
 }
 
 void ZonedAllocator::zoned_set_zone_states(std::vector<zone_state_t> &&_zone_states) {
