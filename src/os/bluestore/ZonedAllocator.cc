@@ -187,6 +187,11 @@ bool ZonedAllocator::zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_cle
   {
     std::lock_guard l(lock);
 
+    if (!cleaning_in_progress_zones.empty()) {
+      ldout(cct, 40) << " cleaning in progress" << dendl;
+      return false;
+    }
+
     // TODO: make this tunable
     uint64_t num_zones_to_clean_at_once = 1;
 
@@ -206,7 +211,6 @@ bool ZonedAllocator::zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_cle
 		   << *idx.begin() << " num_dead_bytes = " << zone_states[*idx.begin()].num_dead_bytes
 		   << dendl;
 
-    ceph_assert(cleaning_in_progress_zones.empty());
     cleaning_in_progress_zones = {idx.begin(), idx.begin() + num_zones_to_clean_at_once};
     *zones_to_clean = {idx.begin(), idx.begin() + num_zones_to_clean_at_once};
   }
