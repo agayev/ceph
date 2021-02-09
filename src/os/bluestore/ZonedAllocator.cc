@@ -203,8 +203,10 @@ bool ZonedAllocator::zoned_get_zones_to_clean(std::deque<uint64_t> *zones_to_cle
     std::vector<uint64_t> idx(num_zones);
     std::iota(idx.begin(), idx.end(), 0);
   
-    for (size_t i = 0; i < zone_states.size(); ++i) {
-      ldout(cct, 40) << __func__ << " zone " << i << zone_states[i] << dendl;
+    if (cct->_conf->subsys.should_gather<ceph_subsys_bluestore, 40>()) {
+      for (size_t i = 0; i < zone_states.size(); ++i) {
+	dout(40) << __func__ << " zone " << i << zone_states[i] << dendl;
+      }
     }
 
     std::partial_sort(idx.begin(), idx.begin() + num_zones_to_clean_at_once, idx.end(),
